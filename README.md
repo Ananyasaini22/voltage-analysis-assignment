@@ -1,6 +1,6 @@
 # Voltage Time Series Analysis
 
-![Dashboard Screenshot](https://i.imgur.com/sample-screenshot.png)
+![Dashboard Screenshot](https://ibb.co/zVP8hg4d)
 
 ## 📋 Assignment Overview
 A comprehensive analysis of voltage time series data with:
