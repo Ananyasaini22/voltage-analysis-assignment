@@ -1,6 +1,10 @@
 # Voltage Time Series Analysis
 
-![Dashboard Screenshot](https://ibb.co/zVP8hg4d)
+![Dashboard Preview](https://iili.io/3v8p9II.md.jpg)
+![Local Peak and Lows](https://iili.io/3vSJmxV.md.png)
+![Voltage Below 20](https://iili.io/3vSF0qN.md.png)
+![Analysis](https://iili.io/3vSqgkX.md.png)
+
 
 ## 📋 Assignment Overview
 A comprehensive analysis of voltage time series data with:
