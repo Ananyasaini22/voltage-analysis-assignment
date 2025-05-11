@@ -126,11 +126,6 @@ critical[['Timestamp','Values','slope','acceleration']].head(3)
 # Output:
 Critical slope events: 14
 
-Timestamp	Values	Slope	Acceleration
-2023-03-04 14:22:00	32.10	-4.25	-12.41
-2023-05-18 09:15:00	28.75	-3.12	-9.82
-2023-01-12 16:43:00	35.20	-2.87	-8.24
-
 🕒 Time-Based Patterns
 ```bash
 df['hour'] = df['Timestamp'].dt.hour
