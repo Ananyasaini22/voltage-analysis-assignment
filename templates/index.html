@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voltage Analysis Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: var(--primary);
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.2em;
+        }
+        h2 {
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 5px;
+            margin-top: 40px;
+        }
+        .plot-container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e6f7ff;
+        }
+        .summary-card {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .btn {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            margin: 10px 0;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+        .btn-download {
+            background: #27ae60;
+        }
+        .btn-download:hover {
+            background: #219653;
+        }
+        .parameters {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .param-item {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        .param-label {
+            font-weight: bold;
+            min-width: 200px;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Voltage Analysis Dashboard</h1>
+        <p>Comprehensive visualization and analysis of voltage time series data</p>
+    </header>
+
+    <div class="parameters">
+        <h2>Analysis Parameters</h2>
+        <div class="param-item">
+            <span class="param-label">Moving Average Window:</span>
+            <span>{{ ma_window }} days</span>
+        </div>
+        <div class="param-item">
+            <span class="param-label">Voltage Threshold:</span>
+            <span>{{ voltage_threshold }}</span>
+        </div>
+        <div class="param-item">
+            <span class="param-label">Slope Acceleration Threshold:</span>
+            <span>{{ slope_threshold }}</span>
+        </div>
+    </div>
+
+    <a href="/download_csv" class="btn btn-download">Download Full Analysis (Excel)</a>
+
+    <div class="plot-container">
+        <h2>Voltage with Moving Averages</h2>
+        <div id="plot-main">{{ plot_main|safe }}</div>
+    </div>
+
+    <div class="plot-container">
+        <h2>Local Peaks and Lows</h2>
+        <div id="plot-peaks">{{ plot_peaks|safe }}</div>
+    </div>
+
+    <div class="plot-container">
+        <h2>Voltage Below {{ voltage_threshold }}</h2>
+        <div id="plot-below">{{ plot_below|safe }}</div>
+    </div>
+
+    <div class="card-container">
+        <div class="summary-card">
+            <h3>Instances Where Voltage Went Below {{ voltage_threshold }}</h3>
+            {% if below_threshold %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Voltage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in below_threshold %}
+                        <tr>
+                            <td>{{ record.Timestamp }}</td>
+                            <td>{{ record.Values|round(2) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No instances found where voltage went below {{ voltage_threshold }}.</p>
+            {% endif %}
+        </div>
+
+        <div class="summary-card">
+            <h3>Downward Slope Acceleration Points</h3>
+            {% if accelerated_slope %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Voltage</th>
+                            <th>Slope</th>
+                            <th>Slope Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in accelerated_slope %}
+                        <tr>
+                            <td>{{ record.Timestamp }}</td>
+                            <td>{{ record.Values|round(2) }}</td>
+                            <td>{{ record.slope|round(4) }}</td>
+                            <td>{{ record.slope_change|round(4) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No downward slope acceleration points found with current threshold.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Enhance interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make tables sortable
+            document.querySelectorAll('table').forEach(table => {
+                const headers = table.querySelectorAll('th');
+                headers.forEach((header, index) => {
+                    header.style.cursor = 'pointer';
+                    header.addEventListener('click', () => {
+                        sortTable(table, index);
+                    });
+                });
+            });
+            
+            // Add loading states
+            const plots = ['plot-main', 'plot-peaks', 'plot-below'];
+            plots.forEach(id => {
+                const container = document.getElementById(id);
+                if (container.innerHTML.trim() === '') {
+                    container.innerHTML = '<div style="padding: 50px; text-align: center;">Loading visualization...</div>';
+                }
+            });
+        });
+
+        function sortTable(table, column) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                const aText = a.cells[column].textContent.trim();
+                const bText = b.cells[column].textContent.trim();
+                
+                // Try to compare as numbers first
+                const aNum = parseFloat(aText);
+                const bNum = parseFloat(bText);
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return aNum - bNum;
+                }
+                
+                // Fall back to string comparison
+                return aText.localeCompare(bText);
+            });
+            
+            // Remove all existing rows
+            while (tbody.firstChild) {
+                tbody.removeChild(tbody.firstChild);
+            }
+            
+            // Re-add the sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+        }
+    </script>
+</body>
+</html>
